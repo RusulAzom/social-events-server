@@ -3,7 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 const { connectDB, disconnectDB } = require("./config/db");
-const jwtRoutes = require("./routes/jwt.routes");
+const authRoutes = require("./routes/auth.routes");
 const eventRoutes = require("./routes/event.routes");
 const myEventsRoutes = require("./routes/myEvents.routes");
 const joinedEventRoutes = require("./routes/joinedEvent.routes");
@@ -30,7 +30,7 @@ app.get("/", (req, res) => {
   res.send("Social Development Events server is running");
 });
 
-app.use("/api/jwt", jwtRoutes);
+app.use("/api", authRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/my-events", myEventsRoutes);
 app.use("/api/joined-events", joinedEventRoutes);

@@ -16,6 +16,14 @@ const EVENT_TYPES = [
   "Community Teaching",
   "Elder Care",
 ];
+const CLIENT_EVENT_TYPES = [
+  "Cleanup",
+  "Plantation",
+  "Donation",
+  "Awareness",
+  "Relief",
+];
+const ALLOWED_EVENT_TYPES = new Set([...EVENT_TYPES, ...CLIENT_EVENT_TYPES]);
 
 const buildUpcomingFilter = (req) => {
   const filter = { eventDate: { $gte: new Date() } };
@@ -32,23 +40,25 @@ const buildUpcomingFilter = (req) => {
 };
 
 const validateEventPayload = (body, creatorEmail) => {
-  const { title, description, eventType, thumbnail, location, eventDate } =
-    body;
+  const { title, description, eventType, thumbnailUrl, thumbnail, location,
+    eventDate } = body;
+
+  const thumbnailValue = thumbnailUrl || thumbnail;
 
   if (
     !title ||
     !description ||
     !eventType ||
-    !thumbnail ||
+    !thumbnailValue ||
     !location ||
     !eventDate ||
     !creatorEmail
   ) {
-    return "All fields (title, description, eventType, thumbnail, location, eventDate) are required";
+    return "All fields (title, description, eventType, thumbnailUrl, location, eventDate) are required";
   }
 
-  if (!EVENT_TYPES.includes(eventType)) {
-    return `Invalid eventType. Allowed types: ${EVENT_TYPES.join(", ")}`;
+  if (!ALLOWED_EVENT_TYPES.has(eventType)) {
+    return `Invalid eventType. Allowed types: ${[...ALLOWED_EVENT_TYPES].join(", ")}`;
   }
 
   const parsedDate = new Date(eventDate);
@@ -118,14 +128,7 @@ router.get("/:id", async (req, res, next) => {
 
 router.post("/", verifyJWT, async (req, res, next) => {
   try {
-    const { creatorEmail } = req.body;
-
-    if (creatorEmail !== req.decoded.email) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden: creatorEmail must match authenticated email",
-      });
-    }
+    const creatorEmail = req.decoded.email;
 
     const validationError = validateEventPayload(req.body, creatorEmail);
     if (validationError) {
@@ -138,7 +141,7 @@ router.post("/", verifyJWT, async (req, res, next) => {
       title: req.body.title.trim(),
       description: req.body.description.trim(),
       eventType: req.body.eventType,
-      thumbnail: req.body.thumbnail.trim(),
+      thumbnail: (req.body.thumbnailUrl || req.body.thumbnail).trim(),
       location: req.body.location.trim(),
       eventDate: new Date(req.body.eventDate),
       creatorEmail,
@@ -156,7 +159,11 @@ router.post("/", verifyJWT, async (req, res, next) => {
       insertedId: result.insertedId,
     });
   } catch (err) {
-    next(err);
+    console.error("Event creation failed:", err);
+    return res.status(err.statusCode || 500).json({
+      success: false,
+      message: err.message || "Failed to create event",
+    });
   }
 });
 
@@ -199,7 +206,7 @@ router.put("/:id", verifyJWT, async (req, res, next) => {
         title: req.body.title.trim(),
         description: req.body.description.trim(),
         eventType: req.body.eventType,
-        thumbnail: req.body.thumbnail.trim(),
+        thumbnail: (req.body.thumbnailUrl || req.body.thumbnail).trim(),
         location: req.body.location.trim(),
         eventDate: new Date(req.body.eventDate),
         updatedAt: new Date(),

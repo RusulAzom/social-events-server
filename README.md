@@ -19,6 +19,11 @@ JWT_SECRET=<secret>
 CLIENT_URL=http://localhost:3000
 ```
 
+For production, set `CLIENT_URL` in the backend hosting environment to the exact
+origin of the deployed frontend (for example,
+`https://social-events-client-pied.vercel.app`). The server falls back to
+`http://localhost:3000` when `CLIENT_URL` is unset.
+
 ## API Endpoints
 
 | Method | Endpoint | Access | Description |

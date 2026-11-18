@@ -10,18 +10,19 @@ const joinedEventRoutes = require("./routes/joinedEvent.routes");
 
 const app = express();
 const port = process.env.PORT || 5000;
-
-const allowedOrigins = [process.env.CLIENT_URL, "http://localhost:3000"];
+const clientUrl = process.env.CLIENT_URL?.trim() || "http://localhost:3000";
 
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || origin === clientUrl) {
         return callback(null, true);
       }
       return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
+    methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 app.use(express.json());
